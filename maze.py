@@ -23,17 +23,6 @@ class Cell(enum.IntEnum):
     WALL = 1
 
 def direction_to_dxy(direction):
-    """Return the corresponding dy,dx tuple. The y-axis points down, the x-axis points right (as the conventions in pyplot.imshow).
-
-    Args:
-        direction (Direction): a direction
-
-    Returns:
-        tuple: dy,dx
-    
-    >>> direction_to_dxy(Direction.UP)
-    (0,-1)
-    """
     if direction == Direction.UP:
         dx, dy = 0, -1
     elif direction == Direction.RIGHT:
@@ -47,18 +36,6 @@ def direction_to_dxy(direction):
     return dy,dx
 
 def dxy_to_direction(dy, dx):
-    """Return the corresponding direction. See direction_to_dxy.
-
-    Args:
-        dy (float): delta on the y-axis
-        dx (float): delta in the x-axis
-
-    Returns:
-        Direction: direction
-    
-    >>> dxy_to_direction(dy=-1, dx=0)
-    Direction.UP
-    """
     assert ((dy == 0) + (dx == 0)) == 1, (dy,dx)
     if dy == 0:
         if dx > 0:
@@ -71,23 +48,9 @@ def dxy_to_direction(dy, dx):
         return Direction.UP
 
 class Maze:
-    """
-    Holds a 2D maze where cells can be either empty or walls. Some empty cells may contain gold.
-    
-    For the exercise, this class sould not be directly instantiated by the user,
-    but instead it should come wrapped, cf create_maze.
-    Otherwise A basic usage is as follows:
-    >>> obs = maze.reset()
-    ... while True:
-    ...   action = np.random.choice(Direction)
-    ...   obs, gold, done, debug_info = maze.step(action)
-    ...   if done:
-    ...     break
-    """
     
     NEIGHBOOR_ADD_COLOR = 50
 
-    # for Maze.render, scalars must be at most (255 - NEIGHBOOR_ADD_COLOR)
     cell_to_color = {
         Cell.EMPTY: (190, 190, 190),
         Cell.WALL: (60, 60, 60),
@@ -95,22 +58,9 @@ class Maze:
 
     @staticmethod
     def load_maze(filepath):
-        """Loads a maze from a previously saved configuration, cf Maze.save_maze
-
-        Args:
-            filepath (str): Full path to a previously saved maze, eg "./maze_1.pkl"
-        """
         return Maze(**pickle.load(open(filepath, "rb")))
 
     def __init__(self, layout, golds, dones, starts):
-        """Instantiate a Maze
-
-        Args:
-            layout (np.ndarray of Cell): Describes the locations of walls
-            golds (np.ndarray of float): Same shape as layout, this describes the locations and quantities of gold
-            dones (np.ndarray of bool): Same shape as layout, this describes the possible ending locations
-            starts (np.ndarray of bool): Same shape as layout, this describes the possible starting locations
-        """
         shape = layout.shape
         assert shape == golds.shape, (shape, golds.shape)
         assert shape == dones.shape, (shape, dones.shape)
@@ -132,26 +82,12 @@ class Maze:
         self.render(just_init=True)
 
     def _get_observation(self, y, x):
-        """Returns the observation of the current state.
-
-        Args:
-            y (int): y absolute position
-            x (int): x absolute position
-
-        Returns:
-            tuple(int,int,Cell,Cell,Cell,Cell): (y,x,top,left,right,bottom)
-        """
         neighbours = self.layout[y-1:y+2, x-1:x+2].flatten().astype(int)
         neighbours = [neighbours[1], neighbours[3], neighbours[5], neighbours[7]] # top, left, right, bottom
         obs = np.array([y, x] + neighbours, dtype=int) # x,y,top,left,right,bottom
         return obs
     
     def reset(self):
-        """Resets the location of the player to one possible start. This should be called after self.__init__ and after everytime self.step returns done==True
-
-        Returns:
-            tuple: observation of the current state, see self._get_observation
-        """
         self.must_be_reset = False
         starts = np.argwhere(self.starts)
         idx = np.random.randint(0,len(starts))
@@ -160,15 +96,6 @@ class Maze:
         return self.obs
     
     def step(self, direction, **kwargs):
-        """Move one step in one direction, and compute the resulting state (eg if there is a wall in the given direction, the state is unchanged).
-        This should be called after self.__init__ and before self.reset, see self.reset.
-
-        Args:
-            direction (Direction): direction to move to
-
-        Returns:
-            tuple(tuple, float, bool, dict): obs (observation of the current state, see self._get_observation), gold, done, info
-        """
         assert 0 <= direction < len(Direction), direction
         if self.must_be_reset:
             raise RuntimeError("Maze must be .reset() after initialization and once done")
@@ -190,15 +117,6 @@ class Maze:
         return self.obs, gold, done, debug_info
     
     def render(self, just_init=False, render_infos=None):
-        """This is a logging function: this returns an image of the current state of the maze (with location of the player).
-
-        Args:
-            just_init (bool, optional): Initialize a view of the maze. This should be True only once (when called from self.__init__) and kept as False otherwise. Defaults to False.
-            render_infos: list of tuples (pixel position, color) which can be passed by client code. These colors will overwrite the default pixel color. If set to None (default value), nothing is done.
-
-        Returns:
-            np.ndarray of np.uint8: image of the current state of the maze
-        """
         if self.maze_frame is None: # draw the maze's layout only once
             offset1 = 150
             offset2 = 50
@@ -236,11 +154,6 @@ class Maze:
         pass
 
     def save_maze(self, filename):
-        """Save the configuration of this maze (layout, golds...). Cf Maze.load_maze
-
-        Args:
-            filename (str): A file path without extension eg "./maze_1"
-        """
         data = {
             "layout": self.layout,
             "golds": self.golds,
@@ -302,16 +215,6 @@ def procedural_maze(h,w,ngolds):
     return env
 
 def create_maze(video_prefix="./vid", fps=4, overwrite_every_episode=False, save_video=True):
-    """Generate a wrapped maze.
-
-    Args:
-        video_prefix (str): see documentation of VideoWriter
-        fps (int): see documentation of VideoWriter
-        overwrite_every_episode (bool): see documentation of VideoWriter
-
-    Returns:
-        A wrapped maze.
-    """
     sizes = [13,21,29]
     size = np.random.choice(sizes)
     ngolds = 8
