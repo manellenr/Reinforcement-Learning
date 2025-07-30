@@ -1,17 +1,3 @@
-"""
-This script should contain a class Wallace, which implements a function `act`, as follows.
-Notably, `act` is expected to take 3 parameters (`obs`, `gold`, `done`), and output `None` if `done==True` or an element of `Action` otherwise.
-
-Here, this examples of Wallace are a bit dummy: he repeatedly executes the same sequence of actions.
-Your mission is to modify the class so that Wallace has better chances
-to gather colossal quantities of gold from the maze.
-
-If you need helper files, please use imports, following this template:
-from myhelper import bbb, ccc # use this for custom relative scripts
-import numpy as np # this syntax is fine for packages
-"""
-# import numpy as np
-# from myhelper import bbb, ccc
 import enum
 import time
 import random
@@ -86,11 +72,6 @@ class Wallace(nn.Module):
         self.to(self.device)
 
         self.writer = SummaryWriter(f"runs/wallace_{int(time.time())}")
-        # self.writer.add_text(
-        #     "hyperparameters",
-        #     "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
-        # )
-
     
     def get_value(self, x):
         return self.critic(x)
@@ -110,9 +91,6 @@ class Wallace(nn.Module):
         dones = torch.tensor(dones, dtype=torch.float32).to(self.device)
 
         num_steps = len(rewards)
-
-        # logprobs = torch.zeros_like(actions, dtype=torch.float32)
-        # values = torch.zeros_like(actions, dtype=torch.float32)
 
         with torch.no_grad():
             action_probs = self.actor(observations)
@@ -212,46 +190,15 @@ class Wallace(nn.Module):
         print(f"Model loaded from {path}")
 
     def act(self, obs, gold_received_at_previous_step, done):
-        """
-        This function gets called alternatively with env.step. At every step, Wallace gets
-        some information and must decide which action to perform.
-
-        When Wallace.act returns Action.GATHER, he will then receive
-        gold_received_at_previous_step = gold != 0 only if he was standing on gold.
-        Whether he was standing on gold or not, he will be sent back to the start, which
-        corresponds to done == True; as a result, the action returned when done == True
-        does not matter, and is expected to be None.
-
-        Args:
-            obs (tuple): The information that Wallace has at this time step: its current
-                (y,x) coordinates, the cells surrounding him (ie either Cell.EMPTY or 
-                Cell.WALL), and whether he is standing on gold. Ie:
-                (y (int), x (int), top (Cell), left (Cell), right (Cell), bottom (Cell),
-                has_gold (bool)
-            gold_received_at_previous_step (float): The amount of gold that Wallace just received.
-                When this is non zero, done == True.
-            done (bool): When True, Wallace will be sent back to the start for the next
-                step: as a result, in that case, we expect the returned action to be None.
-
-        Returns:
-            action (Action): The action that Wallace decides to execute at this time step.
-        """
         y,x,top,left,right,bottom,has_gold = obs
         gold = gold_received_at_previous_step
         if done:
             self.idx = 0
             return None
         else:
-            #print(f"Wallace at ({y},{x}), has_gold={has_gold}, gold_received_at_previous_step={gold}")
-            #print("Random action choice:", random.choice(self.actions[:-1]))
-            #input()
             if has_gold:
                 action = Action.GATHER
             else:
-                #action = self.sequence[self.idx]
-                #action = random.choice(self.actions[:-1])
-                #action = self.policy(obs, gold_received_at_previous_step, done)
-                
                 logits = self.actor(torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0))
                 probs = Categorical(logits=logits)
                 action = probs.sample().item()
@@ -262,11 +209,4 @@ class Wallace(nn.Module):
             return action
 
     def get_custom_render_infos(self):
-        """If it helps you for debugging your Wallace and/or explaining its behavior, you can modify this function 
-        so that it returns a list of tuple of the form (pixel location, RGB color) e.g. [((y1,x1), (r1,g1,b1)), ((y2,x2), (r2,g2,b2))]
-        
-        These pixel colors will overwrite the default colors used to generate Wallace's gameplay video (except Wallace's current location and fog of war)"""
         return None
-
-
-## Call tensorboard: "tensorboard --logdir runs"
