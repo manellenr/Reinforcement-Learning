@@ -1,13 +1,5 @@
 import time
 
-"""
-This script is a unit test. It also shows the syntax for instantiating Wallace.
-
-Make sure that this script does not crash. Specifically, this should run in a limited time.
-
-Note: this is not the evaluation script that we will use to evaluate your Wallace.
-"""
-
 LIMITED_TIME = 5*60
 
 def test_wallace():
